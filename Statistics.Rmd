@@ -1,0 +1,141 @@
+---
+title: "Statistics - lesson plan"
+author: "Geoffrey Millard"
+date: "July 17, 2019"
+self_contained: yes
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read in some data
+This is always where you start when looking to do some preliminary work. I tend to load up packages at the beginning as well.
+
+package kableExtra allows you to make cleaner looking tables more easily
+
+```{r set up workspace, warning=F, message=FALSE}
+library(tidyverse)
+library(dataRetrieval)
+
+sites <- c('0134277112', '0134277114')
+readNWISsite(c('0134277112', '0134277114'))
+available <- whatNWISdata(siteNumber=c('0134277112', '0134277114'))
+actual <- readNWISpCode(parameterCd = available$parm_cd)
+want <- c('00681', '00618')
+data <- readNWISqw(siteNumbers = sites, parameterCd=want)
+codes <- readNWISpCode(parameterCd = unique(data$parm_cd))
+View(data)
+```
+
+## What do we know?
+
+Two sites and two parameters.  How can we quickly generate some summary statistics?
+Piping!
+
+```{r pressure}
+data %>% group_by(site_no, parm_cd) %>% summarize(average=mean(result_va))
+```
+
+## Yea, so?
+
+We can do this for more than one summary statistic at a time!
+
+```{r summarize a bunch of stuff}
+data %>% group_by(site_no, parm_cd) %>% summarize(average=mean(result_va), max=max(result_va, na.rm=T), min=min(result_va, na.rm=T), stdv=sd(result_va, na.rm=T))
+```
+
+Awesome, but what if I wanted to look at this through time?  Monthly or annual?
+
+```{r summarize by date, warning=F, message=F}
+library(lubridate)
+class(data$sample_dt)
+summary <- data %>% group_by(site_no, parm_cd, year(sample_dt), month(sample_dt)) %>% summarize(average=mean(result_va), max=max(result_va, na.rm=T), min=min(result_va, na.rm=T), stdv=sd(result_va, na.rm=T))
+```
+
+Custom groupings are a little more complicated, but can be done.
+
+```{r custom groups}
+data$treatment[data$sample_dt<as.Date('2013-10-1')] <- 1
+data$treatment[data$sample_dt>as.Date('2013-10-1')] <- 2
+data$treatment[data$sample_dt>as.Date('2014-03-31')] <- 3
+
+data %>% group_by(site_no, parm_cd, treatment) %>% summarize(average=mean(result_va), max=max(result_va, na.rm=T), min=min(result_va, na.rm=T), stdv=sd(result_va, na.rm=T))
+```
+
+This makes it really easy to break your data down in a variety of ways relatively quickly.  
+
+## Linear models and correlations
+
+We have some descriptive stats, but we want to see if there are any relationships in our data.  Base-R has some pretty good tools for this, but they don't work very well with data in long format, so we need to switch to a wide format.
+
+```{r cor and lm}
+simple <- data.frame(site=data$site_no, date=data$sample_dt,time=data$sample_tm, parameter=data$parm_cd, result=data$result_va, treatment=data$treatment)
+
+#we need both date and time above, or the spread will not work (multiple samples were collected on the same day after all)
+
+wide <- simple %>% spread(key = parameter, value = result)
+wide2 <- na.omit(wide)
+?cor
+cor(x= wide$`00681`, y= wide$`00618`, use = 'complete.obs', method = 'kendall')
+
+reg1 <- lm(data=wide, `00618`~`00681`)
+summary(reg1)
+```
+
+Basically there is a pretty weak negative correlation, and the slope of the linear regression is not significantly different from zero with a bad adj-R^(2)
+
+#Pairwise comparisons
+
+With different treatment groups, a common test is a t-test or a tukey test.  Lets set up a couple of these tests with our data looking at the distribution (can we use parametic tests) and some groupings.
+
+First we need to set up the class(Factors)
+
+```{r statistical tests}
+wide$site <- as.factor(wide$site)
+wide$treatment <- as.factor(wide$treatment)
+
+#check for normality
+
+shapiro.test(wide$`00618`) # null hypothesis: data is normal
+shapiro.test(wide$`00681`)
+
+#non-parametic example
+kruskal.test(data = wide, `00618`~ site)
+kruskal.test(data = wide, `00618`~ treatment)
+
+# parametic example
+aov1 <- aov(data = wide, `00618`~ site + treatment + site*treatment)
+summary(aov1)
+TukeyHSD(aov1)
+anova(aov1)
+```
+
+This example doesn't have any interaction between the site and treatment level. If it did, we could set up a contrast matrix
+
+```{r contrasts, warning=F, message=F}
+library(multcomp)
+wide$TMT <- interaction(wide$site, wide$treatment)
+aovdoc <- aov(data = wide, `00681`~ site + treatment + site*treatment)
+aov2 <- aov(data=wide, `00681`~TMT)
+summary(aovdoc)
+summary(aov2)
+cntrMat <- rbind("pre-post"=c(1, 0, -1, -1, 0, 1),  # coefficients for testing a within b1
+                  "pre-trans"=c(1,  -1, 0, -1, 1, 0),  # coefficients for testing a within b2
+                  "trans-post"=c(0, 1, -1, 0, -1, 1))  # coefficients for interaction
+
+glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided")
+
+summary(glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided"), test=adjusted("none"))
+```
+
+Or, you can create an Rmarkdown and generate an easy to read table like this one:
+
+
+```{r pretty table, warning=F, message=F}
+library(kableExtra)
+library(broom)
+kable(tidy(summary(glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided"), test=adjusted("none"))), digits = 3) %>% kable_styling(bootstrap_options = c("striped", "hover", 'responsive'), full_width = F)
+```
+
