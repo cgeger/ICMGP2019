@@ -198,6 +198,9 @@ FLP2018 <- FLP2018 %>% filter(Site %in% c("3MB",  "B109",  "B125", "Shack"))
 FLP2018$Site <- as.factor(FLP2018$Site)
 summary(FLP2018)
 
+#get rid of rows that were incorrectly calibrated
+k <- which(Shack$Depth > 11)
+Shack <- Shack[-k,]
 
 #dplyr filtering rows
 Mussels <- Hg %>% dplyr::filter(Matrix == "Mussel")

@@ -1,14 +1,32 @@
 # Part III
 # Visualization
-readRDS("data/FLP2018.Rdata")
+FLP2018 <- readRDS("data/FLP2018.Rdata")
+
 # Base plot (super flexible, lots of code)
+plot(FLP2018$Site, FLP2018$Temp, 
+     xlab = "Site",
+     ylab = "Temperature in degrees C")
+plot(FLP2018$Depth, FLP2018$Temp, col = FLP2018$Date,
+     xlab = "Depth",
+     ylab = "Temperature in degrees C")
+
+
+
 # package(ggplot), fairly flexible and intuitive, better for beginners
 # Scatterplot - geom_point
+library(ggplot2)
+#samples by depth and site
+ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
+  geom_point(alpha = 0.5) + 
+  scale_y_reverse( lim=c(11, 0)) +
+  theme(legend.position = "none") +
+  theme_bw()
+
 ggplot(data = FLP2018, aes(x = Site, y =  Diatoms, color = Site))+
   geom_boxplot(outlier.shape = NA) +
   ylab("Diatoms in ug/L")+
   geom_jitter(alpha = 0.25) +
-  theme(legend.position = "none")
+  theme(legend.position = "none")+ scale_color_viridis_d()
 # Boxplot
 # line/path
 # Linear model + confidence intervals
@@ -61,6 +79,13 @@ ggsave("F:/CBFS/fluoroprobe/DATA ANALYSIS/Plots/DiatomBoxplot.jpg")
 #faceted samples by depth and site
 ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
   geom_point(alpha = 0.5) + 
+  scale_y_reverse( lim=c(11, 0)) +
+  theme(legend.position = "none") +
+  theme_bw()
+
+
+ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
+  geom_point(alpha = 0.5) + 
   facet_grid( ~Site) +
   scale_y_reverse( lim=c(15.5, 0)) +
   theme(legend.position = "none") +
@@ -78,9 +103,20 @@ ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
   scale_y_reverse( lim=c(15.5, 0)) +
   theme(legend.position = "none") +
   theme_bw() +
-  labs(title = 'Date: {frame_time}', x = 'Green Algae in ug/L', y = 'Depth in m') +
+  labs(title = 'Date: {frame_time}', 
+       x = 'Green Algae in ug/L', 
+       y = 'Depth in m') +
   transition_time(Date) +
   ease_aes('linear')
+
+k <- which.max(FLP2018$GreenAlgae)
+FLP2018[k,]
+
+FLP2018 %>% group_by(Site) %>% 
+  summarize(maxGA = max(GreenAlgae)) %>%
+  select(maxGA) %>% unlist
+
+
 
 anim <- ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
   geom_point(size = 2, alpha = 0.5) + 
