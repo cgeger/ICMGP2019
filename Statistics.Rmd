@@ -15,27 +15,51 @@ This is always where you start when looking to do some preliminary work. I tend 
 
 package kableExtra allows you to make cleaner looking tables more easily
 
+Switch to web Browser and go to NWIS Mapper: https://maps.waterdata.usgs.gov/mapper/index.html
+Find Honnedaga Lake gauges and sampling sites
+
 ```{r set up workspace, warning=F, message=FALSE}
 library(tidyverse)
-library(dataRetrieval)
 
+#USGS and EPA dataset retrieval package
+library(dataRetrieval) 
+#click on "Packages" tab to indicate functions available in the dataRetrival package
+
+#these are the USGS sites upstream from Honnedaga Lake, NY that we found in the browser
 sites <- c('0134277112', '0134277114')
+
+#detailed location information about the site
 readNWISsite(c('0134277112', '0134277114'))
+
+#whatNWISdata displays the datasets available at each site
 available <- whatNWISdata(siteNumber=c('0134277112', '0134277114'))
-actual <- readNWISpCode(parameterCd = available$parm_cd)
-want <- c('00681', '00618')
-data <- readNWISqw(siteNumbers = sites, parameterCd=want)
-codes <- readNWISpCode(parameterCd = unique(data$parm_cd))
+actual <- readNWISpCode(parameterCd = available$parm_cd) #interpret parameter codes
+want <- c('00681', '00945', '50287', '50285') #we want: DOC, DSO4, DHg and DMeHg
+data <- readNWISqw(siteNumbers = sites, parameterCd=want) #get the data
+codes <- readNWISpCode(parameterCd = unique(data$parm_cd)) #confirms that we got what we wanted, shows UNITS!
 View(data)
 ```
-
 ## What do we know?
 
-Two sites and two parameters.  How can we quickly generate some summary statistics?
+Two sites and four parameters.  How can we quickly generate some summary statistics?
 Piping!
 
-```{r pressure}
-data %>% group_by(site_no, parm_cd) %>% summarize(average=mean(result_va))
+```{r}
+#first we need to name the parameter codes, so that we don't forget which code is which
+data <- data %>% mutate(Analyte = recode(parm_cd, 
+                         '00681'= "DOC", 
+                         '00945' = "SO4", 
+                         '50287' = "Hg", 
+                         '50285' = "MeHg"))
+
+data <- data %>% mutate(Site = recode(site_no, 
+                         '0134277112' = "Reference", 
+                         '0134277114' = "Treated"))
+
+
+#summary stats
+data %>% group_by(Site, Analyte) %>% summarize(average=mean(result_va, na.rm = T))
+
 ```
 
 ## Yea, so?
@@ -43,7 +67,13 @@ data %>% group_by(site_no, parm_cd) %>% summarize(average=mean(result_va))
 We can do this for more than one summary statistic at a time!
 
 ```{r summarize a bunch of stuff}
-data %>% group_by(site_no, parm_cd) %>% summarize(average=mean(result_va), max=max(result_va, na.rm=T), min=min(result_va, na.rm=T), stdv=sd(result_va, na.rm=T))
+data %>% 
+  group_by(Site, Analyte) %>% 
+  summarize(average=mean(result_va), 
+            stdv=sd(result_va, na.rm=T),
+            max=max(result_va, na.rm=T), 
+            min=min(result_va, na.rm=T), 
+            n = n())
 ```
 
 Awesome, but what if I wanted to look at this through time?  Monthly or annual?
@@ -51,62 +81,110 @@ Awesome, but what if I wanted to look at this through time?  Monthly or annual?
 ```{r summarize by date, warning=F, message=F}
 library(lubridate)
 class(data$sample_dt)
-summary <- data %>% group_by(site_no, parm_cd, year(sample_dt), month(sample_dt)) %>% summarize(average=mean(result_va), max=max(result_va, na.rm=T), min=min(result_va, na.rm=T), stdv=sd(result_va, na.rm=T))
+
+year(data$sample_dt)
+month(data$sample_dt)
+
+summary <- data %>% 
+  group_by(Site, Analyte, year(sample_dt), month(sample_dt)) %>% 
+  summarize(average=mean(result_va), 
+            stdv=sd(result_va, na.rm=T),
+            max=max(result_va, na.rm=T), 
+            min=min(result_va, na.rm=T), 
+            n = n())
+summary
 ```
 
 Custom groupings are a little more complicated, but can be done.
+#pre and post treatment data (Creating categorical variables from continuous variables)
+pre-treatment (Group 1), post-treatment (Group 2), long-term post-treatment (Group 3)
 
 ```{r custom groups}
-data$treatment[data$sample_dt<as.Date('2013-10-1')] <- 1
-data$treatment[data$sample_dt>as.Date('2013-10-1')] <- 2
-data$treatment[data$sample_dt>as.Date('2014-03-31')] <- 3
+data$Treatment[ data$sample_dt < as.Date('2013-10-1')  ] <- 1
+data$Treatment[ data$sample_dt >= as.Date('2013-10-1') ] <- 2
+data$Treatment[ data$sample_dt > as.Date('2014-03-31') ] <- 3
 
-data %>% group_by(site_no, parm_cd, treatment) %>% summarize(average=mean(result_va), max=max(result_va, na.rm=T), min=min(result_va, na.rm=T), stdv=sd(result_va, na.rm=T))
+data %>% 
+  group_by(Site, Analyte, Treatment) %>% 
+  summarize(average=mean(result_va, na.rm = T), 
+            stdv=sd(result_va, na.rm=T),
+            max=max(result_va, na.rm=T), 
+            min=min(result_va, na.rm=T), 
+            n = n())
 ```
 
-This makes it really easy to break your data down in a variety of ways relatively quickly.  
+This makes it really easy to break your data down in a variety of ways relatively quickly.
+
 
 ## Linear models and correlations
 
 We have some descriptive stats, but we want to see if there are any relationships in our data.  Base-R has some pretty good tools for this, but they don't work very well with data in long format, so we need to switch to a wide format.
 
 ```{r cor and lm}
-simple <- data.frame(site=data$site_no, date=data$sample_dt,time=data$sample_tm, parameter=data$parm_cd, result=data$result_va, treatment=data$treatment)
+simple <- data %>% select(Site, Date = sample_dt, Time = sample_tm, Analyte, Result = result_va, Treatment)
 
 #we need both date and time above, or the spread will not work (multiple samples were collected on the same day after all)
 
-wide <- simple %>% spread(key = parameter, value = result)
-wide2 <- na.omit(wide)
-?cor
-cor(x= wide$`00681`, y= wide$`00618`, use = 'complete.obs', method = 'kendall')
+wide <- simple %>% spread(key = Analyte, value = Result)
+wide
 
-reg1 <- lm(data=wide, `00618`~`00681`)
-summary(reg1)
+cor(x= wide$DOC, y= wide$SO4, method = 'kendall')
+cor(x= wide$DOC, y= wide$SO4, use = 'complete.obs', method = 'kendall')
+
+#Visualize data in base plot
+plot(wide$DOC, wide$Hg, xlab = "DOC in mg/L", ylab = "Dissolved Hg in ng/L")
 ```
 
-Basically there is a pretty weak negative correlation, and the slope of the linear regression is not significantly different from zero with a bad adj-R^(2)
+#create a linear regression model and visualize residuals
+```{r}
+reg1 <- lm(data=wide, Hg ~ DOC) #create linear regression model
+reg1 #this is the output of the linear model object
+summary(reg1) 
+plot(reg1)
+```
+
+We wanted to see if DOC concentrations predict Hg concentrations (Formula = Hg ~ DOC)
+Residuals are mostly, but not completely symmetrical -- might have a left skew, but that because we have 6 treatment groups in the dataset
+
+Estimate of intercept has a significant p-value, saying that it is significantly different from zero, but in real life, there are no negative Hg concentrations, so it is not valuable information
+
+The estimate of "DOC" is actually the slope of the line, meaning that for each unit of DOC in mg/L, the concentration of Hg is expected to increase about a half of 1 ng/L. The *** and pvalue < 0.05 indicate that the slope is significantly different from zero.
+
+The R-squared values are a measure of "fit."  If all the data points fell on the regression line, R-squared = 1.
+
+
+#plot the model on the data
+```{r}
+plot(wide$DOC, wide$Hg, xlab = "DOC in mg/L", ylab = "Dissolved Hg in ng/L")
+abline(reg1, lty = 2, col = "cornflowerblue")
+
+```
+
 
 #Pairwise comparisons
 
-With different treatment groups, a common test is a t-test or a tukey test.  Lets set up a couple of these tests with our data looking at the distribution (can we use parametic tests) and some groupings.
+With different treatment groups, a common test is a t-test or a tukey test.  Let's set up a couple of these tests with our data looking at the distribution (can we use parametic tests) and some groupings.
 
 First we need to set up the class(Factors)
 
 ```{r statistical tests}
-wide$site <- as.factor(wide$site)
-wide$treatment <- as.factor(wide$treatment)
+wide$Site <- as.factor(wide$Site)
+wide$Treatment <- as.factor(wide$Treatment)
 
 #check for normality
+hist(wide$DOC)
 
-shapiro.test(wide$`00618`) # null hypothesis: data is normal
-shapiro.test(wide$`00681`)
+shapiro.test(wide$DOC) # null hypothesis: data is normal
+shapiro.test(wide$Hg)
+shapiro.test(wide$DOC[wide$Site == "Reference"])
+#neither dataset is normally distributed (pvalue is less than 0.05)
 
 #non-parametic example
-kruskal.test(data = wide, `00618`~ site)
-kruskal.test(data = wide, `00618`~ treatment)
+kruskal.test(data = wide, DOC ~ Site) #like an anova, testing for differences in DOC concentration by Site
+kruskal.test(data = wide, DOC ~ Treatment) #testing for differences in DOC conc by Treatment
 
 # parametic example
-aov1 <- aov(data = wide, `00618`~ site + treatment + site*treatment)
+aov1 <- aov(data = wide, DOC ~ Site + Treatment + Site*Treatment)
 summary(aov1)
 TukeyHSD(aov1)
 anova(aov1)
@@ -116,15 +194,16 @@ This example doesn't have any interaction between the site and treatment level. 
 
 ```{r contrasts, warning=F, message=F}
 library(multcomp)
-wide$TMT <- interaction(wide$site, wide$treatment)
-aovdoc <- aov(data = wide, `00681`~ site + treatment + site*treatment)
-aov2 <- aov(data=wide, `00681`~TMT)
+wide$TMT <- interaction(wide$Site, wide$Treatment)
+aovdoc <- aov(data = wide, DOC ~ Site + Treatment + Site*Treatment)
+aov2 <- aov(data=wide, DOC ~ TMT)
 summary(aovdoc)
 summary(aov2)
 cntrMat <- rbind("pre-post"=c(1, 0, -1, -1, 0, 1),  # coefficients for testing a within b1
                   "pre-trans"=c(1,  -1, 0, -1, 1, 0),  # coefficients for testing a within b2
                   "trans-post"=c(0, 1, -1, 0, -1, 1))  # coefficients for interaction
 
+#general linear hypothesis
 glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided")
 
 summary(glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided"), test=adjusted("none"))
