@@ -1,0 +1,294 @@
+---
+title: "ICMGP2019 Workshop Part I"
+author: "Caitlin Eger"
+date: "August 15, 2019"
+output: html_document
+---
+
+# Lesson 1:
+## Getting our data ready
+
+In this first lesson we will 1) set our working directory, 2) read in data from files on your computer and from a website, 3) look at different ways to clean and organize our data.
+
+### Let's get started!
+
+First, lets check to see where your working directory is:
+
+
+```{r setup, include=FALSE}
+getwd()
+```
+
+If you are already at the ICMGP2019 data folder we asked you to download in the introduction, than you can jump to "**Reading in data**."
+
+Otherwise, lets set our working directory by clicking `Session -> Set working directory -> Choose directory` and navigating to the data folder.
+
+```{r example graphic 2, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
+knitr::include_graphics("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/guide_images/set_wd.png")
+```
+
+You should end up with a command line something like this:
+
+```{r}
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/data")
+```
+
+## Reading in Data
+
+In base R, the simplest file to import is a .csv file.  A .csv is a comma separated file, and a very common data sharing file type.  There are two .csv files present in this folder and so long as we have set the working directory correctly, importing both is a snap!
+
+```{r}
+Hon <- read.csv("All_Honnedaga_water_chemistry.csv")
+merc <- read.csv("Hg_Honnedaga_water_chemistry.csv")
+```
+
+We can now use some simple functions to get a quick idea of how our data imported
+
+```{r}
+head(Hon, 10)
+```
+
+You can see above the first rows of the dataframe Hon.  If you don't specify the number of rows you want to see, R will default to 6.  This is great, but it would also be useful to know what types of data are contained in the dataframe
+
+```{r}
+str(Hon)
+```
+
+This function allows us to see what types of data are in each column.  We can also check the columns we want to use and make sure R imported them as the right type.
+
+Importing csv files is great, however the majority of data sharing occurs now using excel files.  By itself, R cannot import excel files.  Fortunately for us, there is a package that does a nice job of importing from excel.
+
+```{r}
+library(readxl)
+Hon_xl1 <- read_excel("All_Honnedaga_water_chemistry.xlsx")
+```
+
+If we run the same diagnostics as before with head() and str(), we can see a few differences
+
+```{r}
+head(Hon_xl1)
+str(Hon_xl1)
+```
+
+This is a tibble (tbl) which is still a dataframe, but with a few changes.
+
+If we use the tidyverse version of str() we get some output that is presented a little more neatly
+
+```{r}
+dplyr::glimpse(Hon_xl1)
+```
+
+One important thing to note, is that R has interpreted any column containing an `NA` as a character string!  This would be a pain to change manually, but by makeing a small change to our `read_excel()` command, we can systematically take care of this issue.
+
+```{r}
+Hon_xl2 <- read_excel("All_Honnedaga_water_chemistry.xlsx",na = "NA")
+dplyr::glimpse(Hon_xl2)
+```
+
+Now you can see that columns with numerical values and `NA`s present actually show up as numerical values (dbl).
+
+Since this is much better than our original attempt, lets remove `Hon_xl1` from our environment.  This will R run faster by freeing up our RAM. 
+
+```{r}
+rm(Hon_xl1)
+```
+
+This data is still not perfect, as some of the column names are not very descriptive.  We can change this with a few lines of code.
+
+```{r}
+names(Hon)  # note that column names 11 and 12 are not very helpful
+Hon$X
+Hon$X.1
+names(Hon)[[11]] <- "Time_Sampled"
+names(Hon)[[12]] <- "AM_PM"
+names(Hon) #now the new names are present
+```
+
+## Multiple files at once
+
+Okay, so reading in one file at a time is great, but limited.  This can get really tedious if a collaborator has saved everything in multiple files!  I am going to show you two ways to handle this scenario.
+
+The first step is to create a vector of the files you want to import.
+
+```{r}
+#read in files into a data frame
+csvs <- dir("Fluoroprobe_Data_2018") # get all the files within a particular directory
+csv_paths <- paste("Fluoroprobe_Data_2018", csvs, sep = "/") # create a vector of all those files
+```
+
+Now we can either use a `for()` loop, or the `lapply()` function to read them all in.
+
+```{r}
+#using a for loop
+stack <- NULL #initialize an object to save our outputs into
+for(i in seq_along(csv_paths)){ #iterate along the vector of csvs in the Fluoroprobe directory
+  stack[[i]] <- read.csv(csv_paths[[i]])
+}
+
+#examine the results:
+str(stack) #this is a list of 26 data frames!
+head(stack[[1]]) #note that there are some issues with the read.csv command -- 
+#need to skip some lines, rename columns and prevent strings from becoming factors.
+
+#easier way to do it using R's vectorized operations: lapply
+rm(stack) #not strictly necessary, just a reminder for you that we are overwriting the object "stack"
+
+stack <- lapply(csv_paths, read.csv) #this one line does exactly what the for loop did!
+str(stack[[1]])
+
+```
+
+So we have a list of 26 dataframes, but there are some issues we might want to fix, like some additional header rows, renaming some columns and preventing strings from becoming factors.
+
+If we use some of the additional arguments to `read.csv()` we can fix a lot of these issues.
+
+```{r}
+# Skipping rows, strings as factors and NAs
+?read.csv #understanding read.csv's arguments
+stack <- lapply(csv_paths, read.csv, 
+                stringsAsFactors = F, 
+                skip = 2, 
+                header = F, 
+                na.strings = c("","NA"))
+
+str(stack[[1]])
+```
+
+The downside here is we have dropped all our column names, but we will get them back in a minute after we unlist everything.  Lists can be very useful, but for our purposes we want a single dataframe.
+
+```{r}
+# install.packages("data.table");
+FLP2018 <- data.table::rbindlist(stack) #all the fluoroprobe data in one dataset
+head(FLP2018)
+```
+
+Now lets get those column headers back!!
+
+```{r}
+header <- read.csv(csv_paths[1],
+                   nrows = 1,
+                   header = F,
+                   stringsAsFactors = F)
+names(FLP2018) <- unlist(header)
+str(FLP2018)
+```
+
+There are two more issue we might want to fix.  Right now the Date/Time column has special character in the column name, and the data is a character string. This will make calling that column difficult and prevent R from simplifying our data if we want to make a timeseries plot, or summarize the data by months/seasons/years etc.
+
+```{r}
+names(FLP2018)[1] <- 'DateTime'
+FLP2018$DateTime <- as.Date(FLP2018$DateTime, format = "%m/%d/%Y %H:%M")
+str(FLP2018)
+```
+
+Excellent!
+
+Note: If you need to continue manipulating the data based on dates, it will be helpful to install the `lubridate` package, as it simplifies working with dates quite a bit!  We will do this in Lesson 2: Statistics.
+
+## Reading data from a website
+
+As graduate students, most of the time we are working with data that we have either generated, or our PIs have shared with us.  This is not always the case!  Sometimes we might need to grab data from other sources.  Since we already have the basics of importing data, I'll move quickly through these more complicated examples
+
+### reading from the USGS or the USEPA
+
+The data from Geoff publication (in review) is available from the USGS data portal.  Since this is a cleaner version, we are going to use it in Lesson 2: Statistics.  Since this is my data, I already know some of the site and parameter codes.  If you go to https://maps.waterdata.usgs.gov/mapper/index.html, you can actually use a map to find publically available data from the USGS.
+
+```{r}
+library(tidyverse)
+
+#USGS and EPA dataset retrieval package
+library(dataRetrieval) 
+#click on "Packages" tab to indicate functions available in the dataRetrival package
+
+#these are the USGS sites upstream from Honnedaga Lake, NY that we found in the browser
+sites <- c('0134277112', '0134277114')
+
+#detailed location information about the site
+readNWISsite(c('0134277112', '0134277114'))
+
+#whatNWISdata displays the datasets available at each site
+available <- whatNWISdata(siteNumber=c('0134277112', '0134277114'))
+actual <- readNWISpCode(parameterCd = available$parm_cd) #interpret parameter codes
+want <- c('00681', '00945', '50287', '50285') #we want: DOC, DSO4, DHg and DMeHg
+data <- readNWISqw(siteNumbers = sites, parameterCd=want) #get the data
+codes <- readNWISpCode(parameterCd = unique(data$parm_cd)) #confirms that we got what we wanted, shows UNITS!
+View(data)
+```
+
+
+### Reading from a URL
+
+If the data you want is online, but doesn't have the same kind of data support as the USGS or the EPA.  Below is an example for pulling data from a website.  In this case, a group called MusselWatch.
+
+```{r}
+#reading from a url online
+url <- "https://tinyurl.com/Kachemak" #this is .txt data from the MusselWatch dataset at Kachemak, AK
+Kmak <- read.delim(url)
+head(Kmak)
+str(Kmak)
+
+#reading from a .Rdata file
+urls  <- readRDS("data/MW_urls.Rdata")
+str(urls) #vector of strings, but Rdata can be in any R object class
+
+#reading a bunch of urls online:
+#some of these .txt files are in .csv format and some are in tab-delimited format
+csvs <- urls[c(6,15,26)] #3 are csv
+urls <- urls[-c(6,15,26)] #25 are tabbed
+
+#download datasets from all urls (might take a minute)
+DAT1 <- lapply(urls, read.delim, stringsAsFactors = F) #these are the tab-delimited files
+DAT2 <- lapply(csvs, read.delim, stringsAsFactors = F, sep = ",") #these are comma-separated
+
+#look at the lists
+str(DAT1)
+str(DAT2)
+
+#check to see if column names match up
+#multiple function operations in one step
+table(unlist(lapply(DAT1, names))) #all have the same names
+
+library(dplyr) #use dplyr for the %>% pipe operator
+lapply(DAT1, names) %>% unlist() %>% table() #all have the same names, using dplyr
+lapply(DAT2, names) %>% unlist %>% table #there is one data frame (DAT2[[3]]) with different names
+head(DAT2[[3]])
+DAT2[[3]] %>% head
+
+#match the names for all data frames
+names(DAT2[[3]]) <- names(DAT2[[2]])
+lapply(DAT2, names) %>% unlist %>% table #now all of them are the same
+
+#stack dataframes into one big dataset
+install.packages("data.table")
+library(data.table)
+DAT1 <- rbindlist(DAT1)
+DAT2 <- rbindlist(DAT2, fill = T)
+names(DAT2) == names(DAT1) #one column still has different names
+#all names need to be the same if we want to stack them into one big datset
+names(DAT2)[[1]] <- names(DAT1)[[1]]
+
+#finally we rbind! (row bind)
+DAT <- rbind(DAT1, DAT2, fill = T)
+
+#look at structure of new dataset
+str(DAT) #77786 observations of fish and mussel tissue
+summary(DAT) #not very useful, because all the factors are in character class
+DAT$study <- as.factor(DAT$study)
+DAT <- DAT %>% mutate_if(is.character, as.factor) #conditional mutate
+summary(DAT) #better!
+
+#look at all data
+table(DAT$Parameter)
+
+all_params <- split(DAT, DAT$Parameter)
+str(all_params) #this is a list of dataframes again, but we split by parameter instead of by site!
+Hg <- all_params[["Mercury"]]
+str(Hg)
+summary(Hg)
+
+#now we have a nice big mercury dataset!
+table(Hg$Matrix) %>% sort #mostly mussels and oysters
+
+```
+
+
