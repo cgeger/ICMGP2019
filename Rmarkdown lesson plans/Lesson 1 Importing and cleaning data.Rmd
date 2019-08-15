@@ -5,6 +5,12 @@ date: "August 15, 2019"
 output: html_document
 ---
 
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = TRUE,
+                      root.dir = "C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
+```
+
+
 # Lesson 1:
 ## Getting our data ready
 
@@ -15,7 +21,7 @@ In this first lesson we will 1) set our working directory, 2) read in data from 
 First, lets check to see where your working directory is:
 
 
-```{r setup, include=FALSE}
+```{r}
 getwd()
 ```
 
@@ -23,14 +29,16 @@ If you are already at the ICMGP2019 data folder we asked you to download in the 
 
 Otherwise, lets set our working directory by clicking `Session -> Set working directory -> Choose directory` and navigating to the data folder.
 
-```{r example graphic 2, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
+**For the purposes of this guide, I will repeat the working directory every time we import a file so you can see where it is coming from on my computer.  If you have set your working directory properly, you will not need to repeat this step!*
+
+```{r example graphic 2, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 1: How do we set the working directory?'}
 knitr::include_graphics("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/guide_images/set_wd.png")
 ```
 
 You should end up with a command line something like this:
 
 ```{r}
-setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/data")
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
 ```
 
 ## Reading in Data
@@ -38,8 +46,9 @@ setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/data")
 In base R, the simplest file to import is a .csv file.  A .csv is a comma separated file, and a very common data sharing file type.  There are two .csv files present in this folder and so long as we have set the working directory correctly, importing both is a snap!
 
 ```{r}
-Hon <- read.csv("All_Honnedaga_water_chemistry.csv")
-merc <- read.csv("Hg_Honnedaga_water_chemistry.csv")
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
+Hon <- read.csv("data/All_Honnedaga_water_chemistry.csv")
+merc <- read.csv("data/Hg_Honnedaga_water_chemistry.csv")
 ```
 
 We can now use some simple functions to get a quick idea of how our data imported
@@ -60,10 +69,11 @@ Importing csv files is great, however the majority of data sharing occurs now us
 
 ```{r}
 library(readxl)
-Hon_xl1 <- read_excel("All_Honnedaga_water_chemistry.xlsx")
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
+Hon_xl1 <- read_excel("data/All_Honnedaga_water_chemistry.xlsx")
 ```
 
-If we run the same diagnostics as before with head() and str(), we can see a few differences
+If we run the same diagnostics as before with *head()* and *str()*, we can see a few differences
 
 ```{r}
 head(Hon_xl1)
@@ -72,22 +82,23 @@ str(Hon_xl1)
 
 This is a tibble (tbl) which is still a dataframe, but with a few changes.
 
-If we use the tidyverse version of str() we get some output that is presented a little more neatly
+If we use the tidyverse version of *str()* we get some output that is presented a little more neatly
 
 ```{r}
 dplyr::glimpse(Hon_xl1)
 ```
 
-One important thing to note, is that R has interpreted any column containing an `NA` as a character string!  This would be a pain to change manually, but by makeing a small change to our `read_excel()` command, we can systematically take care of this issue.
+One important thing to note, is that R has interpreted any column containing an `r NA` as a character string!  This would be a pain to change manually, but by makeing a small change to our *read_excel()* command, we can systematically take care of this issue.
 
 ```{r}
-Hon_xl2 <- read_excel("All_Honnedaga_water_chemistry.xlsx",na = "NA")
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
+Hon_xl2 <- read_excel("data/All_Honnedaga_water_chemistry.xlsx",na = "NA")
 dplyr::glimpse(Hon_xl2)
 ```
 
-Now you can see that columns with numerical values and `NA`s present actually show up as numerical values (dbl).
+Now you can see that columns with numerical values and `r NA`s present actually show up as numerical values (dbl).
 
-Since this is much better than our original attempt, lets remove `Hon_xl1` from our environment.  This will R run faster by freeing up our RAM. 
+Since this is much better than our original attempt, lets remove *Hon_xl1* from our environment.  This will R run faster by freeing up our RAM. 
 
 ```{r}
 rm(Hon_xl1)
@@ -112,13 +123,15 @@ The first step is to create a vector of the files you want to import.
 
 ```{r}
 #read in files into a data frame
-csvs <- dir("Fluoroprobe_Data_2018") # get all the files within a particular directory
-csv_paths <- paste("Fluoroprobe_Data_2018", csvs, sep = "/") # create a vector of all those files
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
+csvs <- dir("data/Fluoroprobe_Data_2018") # get all the files within a particular directory
+csv_paths <- paste("data/Fluoroprobe_Data_2018", csvs, sep = "/") # create a vector of all those files
 ```
 
-Now we can either use a `for()` loop, or the `lapply()` function to read them all in.
+Now we can either use a *for()* loop, or the *lapply()* function to read them all in.
 
 ```{r}
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
 #using a for loop
 stack <- NULL #initialize an object to save our outputs into
 for(i in seq_along(csv_paths)){ #iterate along the vector of csvs in the Fluoroprobe directory
@@ -140,9 +153,10 @@ str(stack[[1]])
 
 So we have a list of 26 dataframes, but there are some issues we might want to fix, like some additional header rows, renaming some columns and preventing strings from becoming factors.
 
-If we use some of the additional arguments to `read.csv()` we can fix a lot of these issues.
+If we use some of the additional arguments to *read.csv()* we can fix a lot of these issues.
 
 ```{r}
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
 # Skipping rows, strings as factors and NAs
 ?read.csv #understanding read.csv's arguments
 stack <- lapply(csv_paths, read.csv, 
@@ -165,6 +179,7 @@ head(FLP2018)
 Now lets get those column headers back!!
 
 ```{r}
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
 header <- read.csv(csv_paths[1],
                    nrows = 1,
                    header = F,
@@ -183,7 +198,7 @@ str(FLP2018)
 
 Excellent!
 
-Note: If you need to continue manipulating the data based on dates, it will be helpful to install the `lubridate` package, as it simplifies working with dates quite a bit!  We will do this in Lesson 2: Statistics.
+Note: If you need to continue manipulating the data based on dates, it will be helpful to install the *lubridate* package, as it simplifies working with dates quite a bit!  We will do this in Lesson 2: Statistics.
 
 ## Reading data from a website
 
@@ -191,7 +206,7 @@ As graduate students, most of the time we are working with data that we have eit
 
 ### reading from the USGS or the USEPA
 
-The data from Geoff publication (in review) is available from the USGS data portal.  Since this is a cleaner version, we are going to use it in Lesson 2: Statistics.  Since this is my data, I already know some of the site and parameter codes.  If you go to https://maps.waterdata.usgs.gov/mapper/index.html, you can actually use a map to find publically available data from the USGS.
+The data from Geoff's publication (in review) is available from the USGS data portal.  Since this is a cleaner version, we are going to use it in Lesson 2: Statistics.  Since this is my data, I already know some of the site and parameter codes.  If you go to https://maps.waterdata.usgs.gov/mapper/index.html, you can actually use a map to find publically available data from the USGS.
 
 ```{r}
 library(tidyverse)
@@ -221,6 +236,7 @@ View(data)
 If the data you want is online, but doesn't have the same kind of data support as the USGS or the EPA.  Below is an example for pulling data from a website.  In this case, a group called MusselWatch.
 
 ```{r}
+setwd("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/")
 #reading from a url online
 url <- "https://tinyurl.com/Kachemak" #this is .txt data from the MusselWatch dataset at Kachemak, AK
 Kmak <- read.delim(url)
