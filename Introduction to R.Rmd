@@ -20,26 +20,26 @@ This introduction is desgined to help you get started with the software package.
 Once you open RStudio, you will be presented with a screen similar to this:
 
 ```{r startup screen, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
-knitr::include_graphics("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/startup_screen_1.png")
+knitr::include_graphics("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/guide_images/startup_screen_1.png")
 ```
 
 You should see three (or four) panels depending on if you have used RStudio before.  On the left is the Console, which is the main computational window with the `r kableExtra::text_spec('>', color = 'blue')` underneath some R versioning information.  The console is where your commands tell R what to compute, but we do not want to work in this window.
 
 In order to have a clear record of our work, we want to open a script.  We can do this with the keyboard shortcut ctrl+shift+N, or by clicking *File -> New File -> R Script.*  You should now have a new script window above your console
 
-```{r example graphic 2, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
-knitr::include_graphics("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/startup_screen.png")
+```{r example graphic 2, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 2: This is what you want RStudio to look like.'}
+knitr::include_graphics("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/guide_images/startup_screen.png")
 ```
 
 If you have used RStudio before, you might actually have started with some script windows already open.  The other two screens that RStudio presents contain helpful information as we code which I will explain as we go.  **Running the code in our script is very easy, simply click the line of code you want to run and press ctrl+enter (or press ctrl+enter when you finish typing a line of code).** This will transfer that line of script to the console and perform the designated function.
 
 You may also want to "soft wrap" your code so that your script doesn't type off the side of the screen.  You can do that by clicking *Tools -> Global Options* and then in the Code table select the *soft wrap R Source files* box.
 
-```{r example graphic 2, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
-knitr::include_graphics("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/softwrap_dialogue.png")
+```{r how to soft wrap, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 3: I find soft-wraping your code incredibly useful.'}
+knitr::include_graphics("C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/guide_images/softwrap_dialogue.png")
 ```
 
-The final thing we want to do before jumping into some code is to set the working directory.  The simplest way to do this is in the toolbar clicking *Session -> Set Working Directory -> Set Directory,* or by using the keyboard shortcut ctrl+shift+H and navigating to your desired directory (eg. C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/). Should then see in the console the command `r kableExtra::text_spec( setwd('C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/', color='blue')`, which you can copy and paste into your script.
+The final thing we want to do before jumping into some code is to set the working directory.  The simplest way to do this is in the toolbar clicking *Session -> Set Working Directory -> Set Directory,* or by using the keyboard shortcut ctrl+shift+H and navigating to your desired directory (eg. C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/). Should then see in the console the command `r kableExtra::text_spec( setwd('C:/Users/gmill/Dropbox/Conference workshops/ICMGP2019/'), color='blue')`, which you can copy and paste into your script.
 
 ## Lets Get Started!
 
@@ -88,7 +88,7 @@ j <- seq(2, 20, 2)
 k <- rep(c('left', 'right'), 5)
 ```
 
-If you notice, these three vectors all have a length of ten, while `x` has a length of one.
+If you notice, these three vectors all have a length of ten, while `x` has a length of one.  Additionally, `#` tells R that the following line is a comment, and not actually a line of code (very useful for documenting your work!!!)
 
 ```{r}
 length(x)
@@ -112,6 +112,37 @@ We can also create column names for the data, either as we make the dataframe or
 ```{r}
 df1 <- data.frame('odd'=i, 'even'=j, 'hand'=k, 'letters'=l)
 ```
+
+We can use those column names to specify the data we want to use, or use [], or a combination of the two
+
+```{r}
+df1$odd # specifies the entire "odd" column
+df1[2,1] # specifies the second value of the first column
+df1$odd[2] # specifies the second value of the "odd" column
+```
+
+Notice that the last two accomplish the same thing.  They each return the second value of the *df1$odd*, or first column
+
+This notation comes in handy if your have a list of R objects.  Lists are a group of different objects and are really useful when you are generating some type of output (like a linear regression).  Lets create a list of R objects.
+
+```{r}
+all <- list(a=df1, b=df, c=i, d=j, e=x)
+all
+```
+
+*all* is now a list of five different objects.  We can call parts of the list, and even values within the list using the same types of notation we tried earlier.
+
+```{r}
+all$b
+all[[2]]
+
+all$b[3,3]
+all[[2]][3,3]
+```
+
+Notice, we can use the assigned names for each object on the list, and the numerical notation to grab the data of interest.
+
+## Finally
 
 The final thing we need to do in preparation for the workshop, is download the datafolder we have made available for you on GitHub.  You can find it by navigating to github.com and searching for 'ICMGP2019.'
 
