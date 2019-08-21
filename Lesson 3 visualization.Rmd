@@ -52,11 +52,78 @@ plot(FLP2018$Site, FLP2018$Temp,
      ylab = "Temperature in degrees C")
 
 plot(y=FLP2018$Depth, x=FLP2018$Temp, col = FLP2018$Date,
-     ylab = "Depth",
-     xlab = "Temperature in degrees C",
-    ylim=rev(range(FLP2018$Depth)))
+    ylim=rev(range(FLP2018$Depth)), 
+    axes = F, ann = F)
+box()
+axis(side = 3)
+axis(side = 2)
+mtext('Temperature (\u00B0C)', side = 3, line = 2.5)
+mtext('Depth (m)', side = 2, line = 2.5)
 ```
+
+Now it looks like a depth profile, but we had to do a lot of additional coding to get it this way.  Also, if you look at the dataset, the depth profile doesn't distinguish between sites - just dates!  Fixing this to look at each site will require creating a separate plot for each
 
 Also notice the order in which you run lines of code is important when using the basic R graphics.  If we want to put a line, or additional points on the plot, we need to make sure everything happens in the right order.
 
 ### ggplot
+
+This software package takes the control of basic R graphics and places them in a slightly more user friendly package.  This is still a fairly flexible package, but you do sacrafice some control for convenience.  We believe this package is very useful, especially for people just starting with R. 
+
+Lets see if we can recreate plots from above:
+
+```{r}
+library(tidyverse) # or library(ggplot2)
+library(gridExtra)
+
+p1 <- ggplot(FLP2018, aes(x=Site, y=Temp))+
+  geom_boxplot()+
+  theme_bw()
+
+p2 <- FLP2018 %>% ggplot(aes(x=Depth, y=Temp, color = factor(month(Date)), group = Date))+
+  geom_path()+
+  scale_x_reverse()+
+  coord_flip()+
+  scale_y_continuous(position = 'right')+
+  facet_wrap(~Site, ncol = 1)+
+  theme_bw()
+```
+
+Now we have recreated both of these plots.  We could visualize them at the same time, but I don't think that is actually necessary with this example.
+
+```{r}
+gridExtra::grid.arrange(p1, p2, nrow=1)
+```
+
+We can also fairly easily do a bunch of different things with our plots.  For example, if we wanted to visualize all the datapoints on top of the boxplot
+
+```{r}
+ggplot(data = FLP2018, aes(x = Site, y =  Temp, color = Site))+
+  geom_boxplot(outlier.shape = NA) +
+  ylab("Temperature in /00B0C")+
+  geom_jitter(alpha = 0.25) +
+  theme(legend.position = "none")+ 
+  scale_color_viridis_d()
+```
+
+or a different example
+
+```{r}
+ggplot(data = FLP2018, aes(x = Site, y =  Diatoms, color = Site))+
+  geom_boxplot(outlier.shape = NA) +
+  ylab("Diatoms in ug/L")+
+  geom_jitter(alpha = 0.25) +
+  theme(legend.position = "none")+ scale_color_viridis_d()
+```
+
+
+```{r}
+# install.packages("leaflet")
+library(leaflet)
+leaflet(data = na.omit(Hg$)) %>%
+  leaflet::addTiles() %>%
+  leaflet::addCircles(~lon, ~lat, opacity = 0.5)
+leaflet(data = Hg$General_Location) %>%
+  addTiles() %>%
+  addCircles()
+```
+
