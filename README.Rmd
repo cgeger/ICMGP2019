@@ -2,7 +2,7 @@
 title: "Introduction to R"
 author: "Geoffrey Millard"
 date: "August 7, 2019"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
