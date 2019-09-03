@@ -24,6 +24,7 @@ Once you open RStudio, you will be presented with a screen similar to this:
 
 ![ICMGP2019](guide_images/startup_screen_1.png){width=500px}
 
+
 ```{r startup screen, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
 knitr::include_graphics("guide_images/startup_screen_1.png")
 
