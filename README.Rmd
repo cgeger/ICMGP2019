@@ -9,7 +9,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-setwd("~/ICMGP2019")
+library(here)
+setwd(here())
 ```
 # A Short Introduction to R
 ## Congratulations on deciding to use R!
