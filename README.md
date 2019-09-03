@@ -21,11 +21,11 @@ This introduction is designed to help you get started with the software package.
 
 Once you open RStudio, you will be presented with a screen similar to this:
 
-![](guide_images/startup_screen_1.png)
+![](startup_screen_1.png)
 <img src="guide_images/startup_screen_1.png" width="1920px">
 
 <div class="figure">
-<img src="guide_images/startup_screen_1.png" alt="Figure 1: This is what RStudio looks like when you start it up." width="1920" />
+<img src="startup_screen_1.png" alt="Figure 1: This is what RStudio looks like when you start it up." width="1920" />
 <p class="caption">Figure 1: This is what RStudio looks like when you start it up.</p>
 </div>
 

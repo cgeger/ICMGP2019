@@ -25,11 +25,11 @@ This introduction is designed to help you get started with the software package.
 
 Once you open RStudio, you will be presented with a screen similar to this:
 
-![](guide_images/startup_screen_1.png)
+![](startup_screen_1.png)
 <img src="guide_images/startup_screen_1.png" width="1920px">
 
 ```{r startup screen, out.width = 1920, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
-knitr::include_graphics("guide_images/startup_screen_1.png")
+knitr::include_graphics("startup_screen_1.png")
 ```
 
 You should see three (or four) panels depending on whether you have used RStudio before. 
