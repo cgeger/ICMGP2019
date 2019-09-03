@@ -32,6 +32,8 @@ introduction before the workshop begins.**
 Once you open RStudio, you will be presented with a screen similar to
 this:
 
+![](guide_images/startup_screen_1.png)
+
 <img src="guide_images/startup_screen_1.png" title="Figure 1: This is what RStudio looks like when you start it up." alt="Figure 1: This is what RStudio looks like when you start it up." width="1920" height="1080" />
 
 You should see three (or four) panels depending on whether you have used
