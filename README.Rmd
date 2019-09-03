@@ -2,7 +2,9 @@
 title: "Introduction to R"
 author: "Geoffrey Millard"
 date: "August 7, 2019"
-output: github_document
+output: 
+  html_document:
+    keep_md: TRUE
 ---
 
 ```{r setup, include=FALSE}
@@ -22,9 +24,9 @@ This introduction is designed to help you get started with the software package.
 
 Once you open RStudio, you will be presented with a screen similar to this:
 
-![cgeger/ICMGP2019](guide_images/startup_screen_1.png){width=500px}
+![](guide_images/startup_screen_1.png)
 
-```{r startup screen, out.width = 1920, out.height=1080, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
+```{r startup screen, out.width = 1920, echo=F, fig.cap='Figure 1: This is what RStudio looks like when you start it up.'}
 knitr::include_graphics("guide_images/startup_screen_1.png")
 ```
 
