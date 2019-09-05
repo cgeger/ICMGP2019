@@ -1,7 +1,7 @@
 ---
 title: "Lesson 3 - Additional Visualizations"
 author: "Caitlin Eger"
-date: "August 16, 2019"
+date: "September 8, 2019"
 output: html_document
 ---
 
@@ -13,11 +13,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Because R is an open source software package, there are many different packages for generating graphs, maps, animations, etc.  We won't be able to introduce everything during this workshop, but we want to give you enough tools to get started.  Remember, a quick internet search usually turns up some helpful examples if you are struggling to get your plot to look right.
 
-### Base R images
+## Base R images
 
 The functions included with your basic R install are actually super flexible.  It is possible to make a figure do pretty much anything using the base R plotting functions.  The downside of all this flexibility is you might need to do a lot of coding to get your plot perfect.
 
 Lets look at some examples using some data from Lesson 1
+
+### Boxplot
 
 ```{r}
 FLP2018 <- readRDS("data/FLP2018.Rdata")
@@ -29,7 +31,9 @@ plot(FLP2018$Site, FLP2018$Temp,
 
 That was pretty quick and painless!  It also only scratches the surface of what these plots can do, but it can take a lot of work to learn all the functions you need.
 
-Another example
+### Boxplot and Scatterplot
+
+Another example:
 ```{r}
 par(mfrow = c(1,2))
 
@@ -42,7 +46,9 @@ plot(FLP2018$Depth, FLP2018$Temp, col = FLP2018$Date,
      ylab = "Temperature in degrees C")
 ```
 
-The second figure here is a depth profile, but it doesn't look like one.
+The second figure here is a depth profile, but it doesn't look like one. Let's change it so that depth is represented on the vertical axis
+
+### Boxplot and Lineplot
 
 ```{r}
 par(mfrow = c(1,2))
@@ -54,9 +60,73 @@ plot(FLP2018$Site, FLP2018$Temp,
 plot(y=FLP2018$Depth, x=FLP2018$Temp, col = FLP2018$Date,
      ylab = "Depth",
      xlab = "Temperature in degrees C",
-    ylim=rev(range(FLP2018$Depth)))
+     ylim=rev(range(FLP2018$Depth)))
 ```
 
-Also notice the order in which you run lines of code is important when using the basic R graphics.  If we want to put a line, or additional points on the plot, we need to make sure everything happens in the right order.
+Also notice the order in which you run lines of code is important, especially when creating graphics. Writing code is like writing a recipe, if we run lines of code in the wrong order, it can be like telling the computer to bake the cake before the batter is mixed. If we want to put a line, or additional points on the plot, we need to make sure everything happens in the right order.
 
-### ggplot
+## Introducing `ggplot`
+
+### Scatterplot
+
+The `ggplot` library provides more tools for creating data-driven visualizations. Let's create a scatterplot that shows the concentration of Green Algae in the fluoroprobe samples by depth and site.
+
+```{r, results = FALSE}
+library(ggplot2)
+ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
+  geom_point(alpha = 0.5) + 
+  scale_y_reverse( lim=c(11, 0)) +
+  theme(legend.position = "none") +
+  theme_bw()
+```
+
+### Boxplot
+
+Let's make a boxplot of the Diatom concentrations in the fluoroprobe dataset by site, with jittered points that show the
+
+```{r}
+ggplot(data = FLP2018, aes(x = Site, y =  Diatoms, color = Site))+
+  geom_boxplot(outlier.shape = NA) +
+  ylab("Diatoms in ug/L")+
+  geom_jitter(alpha = 0.25) +
+  theme(legend.position = "none") + scale_color_viridis_d()
+```
+
+### Timeseries
+
+```{r}
+ggplot(data = FLP2018, 
+       aes(x = Date, 
+           y = Diatoms, 
+           color = Site,
+           group = Depth)) +
+    geom_point(alpha = 0.25)
+
+
+```
+    
+### Faceting
+
+```{r}
+ggplot(data = FLP2018, 
+       aes(x = Date, 
+           y = Diatoms, 
+           color = Site,
+           group = Depth)) +
+    geom_point(alpha = 0.25) +
+    facet_wrap( ~Site)
+```
+
+```{r}
+ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
+  geom_point(alpha = 0.5) + 
+  scale_y_reverse( lim=c(11, 0)) +
+  theme(legend.position = "none") +
+  theme_bw() +
+    facet_wrap( ~Site)
+```
+
+## Introducing gganimate
+```{r}
+#install.packages("gganimate")
+library(gganimate)
