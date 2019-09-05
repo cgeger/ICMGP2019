@@ -143,7 +143,7 @@ plot(wide$DOC, wide$Hg, xlab = "DOC in mg/L", ylab = "Dissolved Hg in ng/L")
 ```{r}
 reg1 <- lm(data=wide, Hg ~ DOC) #create linear regression model
 reg1 #this is the output of the linear model object
-summary(reg1) 
+summary(reg1)
 par(mfrow=c(2,2))
 plot(reg1)
 par(mfrow=c(1,1))
