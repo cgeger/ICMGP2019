@@ -1,5 +1,5 @@
 ---
-title: "Statistics - lesson plan"
+title: "Lesson 2 - Statistics"
 author: "Geoffrey Millard"
 date: "July 17, 2019"
 self_contained: yes
@@ -10,10 +10,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Read in some data
-This is always where you start when looking to do some preliminary work. I tend to load up packages at the beginning as well.
+## Picking up where we left off
+For this lesson, we are going to use data from the United States Geological Survey.  The same data we pulled from NWIS towards the end of lesson 1. (repeated here)
 
-package kableExtra allows you to make cleaner looking tables more easily
 
 Switch to web Browser and go to NWIS Mapper: https://maps.waterdata.usgs.gov/mapper/index.html
 Find Honnedaga Lake gauges and sampling sites
@@ -23,7 +22,7 @@ library(tidyverse)
 
 #USGS and EPA dataset retrieval package
 library(dataRetrieval) 
-#click on "Packages" tab to indicate functions available in the dataRetrival package
+#click on "Packages" tab to see functions available in the dataRetrival package
 
 #these are the USGS sites upstream from Honnedaga Lake, NY that we found in the browser
 sites <- c('0134277112', '0134277114')
@@ -82,8 +81,8 @@ Awesome, but what if I wanted to look at this through time?  Monthly or annual?
 library(lubridate)
 class(data$sample_dt)
 
-year(data$sample_dt)
-month(data$sample_dt)
+head(year(data$sample_dt))
+head(month(data$sample_dt))
 
 summary <- data %>% 
   group_by(Site, Analyte, year(sample_dt), month(sample_dt)) %>% 
@@ -102,7 +101,7 @@ pre-treatment (Group 1), post-treatment (Group 2), long-term post-treatment (Gro
 ```{r custom groups}
 data$Treatment[ data$sample_dt < as.Date('2013-10-1')  ] <- 1
 data$Treatment[ data$sample_dt >= as.Date('2013-10-1') ] <- 2
-data$Treatment[ data$sample_dt > as.Date('2014-03-31') ] <- 3
+data$Treatment[ data$sample_dt > as.Date('2014-02-28') ] <- 3
 
 data %>% 
   group_by(Site, Analyte, Treatment) %>% 
@@ -121,15 +120,20 @@ This makes it really easy to break your data down in a variety of ways relativel
 We have some descriptive stats, but we want to see if there are any relationships in our data.  Base-R has some pretty good tools for this, but they don't work very well with data in long format, so we need to switch to a wide format.
 
 ```{r cor and lm}
+head(data)
 simple <- data %>% select(Site, Date = sample_dt, Time = sample_tm, Analyte, Result = result_va, Treatment)
+simple <- data.frame(Site=data$Site, Date = data$sample_dt, Time = data$sample_tm, Analyte=data$Analyte, Result = data$result_va, Treatment=data$Treatment)
 
-#we need both date and time above, or the spread will not work (multiple samples were collected on the same day after all)
+
+# we need both date and time above, or the spread will not work (multiple samples were collected on the same day after all)
 
 wide <- simple %>% spread(key = Analyte, value = Result)
-wide
+head(wide)
+tail(wide)
 
-cor(x= wide$DOC, y= wide$SO4, method = 'kendall')
-cor(x= wide$DOC, y= wide$SO4, use = 'complete.obs', method = 'kendall')
+cor(x= wide$DOC, y= wide$Hg)
+cor(x= wide$DOC, y= wide$Hg, use = 'complete.obs')
+cor(x= wide$DOC, y= wide$Hg, use = 'complete.obs', method = 'kendall')
 
 #Visualize data in base plot
 plot(wide$DOC, wide$Hg, xlab = "DOC in mg/L", ylab = "Dissolved Hg in ng/L")
@@ -140,15 +144,17 @@ plot(wide$DOC, wide$Hg, xlab = "DOC in mg/L", ylab = "Dissolved Hg in ng/L")
 reg1 <- lm(data=wide, Hg ~ DOC) #create linear regression model
 reg1 #this is the output of the linear model object
 summary(reg1) 
+par(mfrow=c(2,2))
 plot(reg1)
+par(mfrow=c(1,1))
 ```
 
 We wanted to see if DOC concentrations predict Hg concentrations (Formula = Hg ~ DOC)
-Residuals are mostly, but not completely symmetrical -- might have a left skew, but that because we have 6 treatment groups in the dataset
+Residuals are mostly, but not completely symmetrical -- might have a left skew, but that because we have 6 treatment groups in the data set
 
 Estimate of intercept has a significant p-value, saying that it is significantly different from zero, but in real life, there are no negative Hg concentrations, so it is not valuable information
 
-The estimate of "DOC" is actually the slope of the line, meaning that for each unit of DOC in mg/L, the concentration of Hg is expected to increase about a half of 1 ng/L. The *** and pvalue < 0.05 indicate that the slope is significantly different from zero.
+The estimate of "DOC" is actually the slope of the line, meaning that for each unit of DOC in mg/L, the concentration of Hg is expected to increase about a half of 1 ng/L. The *** and p-value < 0.05 indicate that the slope is significantly different from zero.
 
 The R-squared values are a measure of "fit."  If all the data points fell on the regression line, R-squared = 1.
 
@@ -163,7 +169,7 @@ abline(reg1, lty = 2, col = "cornflowerblue")
 
 #Pairwise comparisons
 
-With different treatment groups, a common test is a t-test or a tukey test.  Let's set up a couple of these tests with our data looking at the distribution (can we use parametic tests) and some groupings.
+With different treatment groups, a common test is a t-test or a Tukey test.  Let's set up a couple of these tests with our data looking at the distribution (can we use parametric tests) and some groupings.
 
 First we need to set up the class(Factors)
 
@@ -177,8 +183,11 @@ hist(wide$DOC)
 shapiro.test(wide$DOC) # null hypothesis: data is normal
 shapiro.test(wide$Hg)
 shapiro.test(wide$DOC[wide$Site == "Reference"])
-#neither dataset is normally distributed (pvalue is less than 0.05)
+```
 
+neither dataset is normally distributed (pvalue is less than 0.05), but for the interest of this excercise, lets look at both some parametric and non-parametric tests.
+
+```{r}
 #non-parametic example
 kruskal.test(data = wide, DOC ~ Site) #like an anova, testing for differences in DOC concentration by Site
 kruskal.test(data = wide, DOC ~ Treatment) #testing for differences in DOC conc by Treatment
@@ -190,7 +199,7 @@ TukeyHSD(aov1)
 anova(aov1)
 ```
 
-This example doesn't have any interaction between the site and treatment level. If it did, we could set up a contrast matrix
+This example doesn't have any interaction between the site and treatment level. If it did, we could set up a contrast matrix.  This requires having a unique identifier for each level of treatment.
 
 ```{r contrasts, warning=F, message=F}
 library(multcomp)
@@ -199,15 +208,23 @@ aovdoc <- aov(data = wide, DOC ~ Site + Treatment + Site*Treatment)
 aov2 <- aov(data=wide, DOC ~ TMT)
 summary(aovdoc)
 summary(aov2)
-cntrMat <- rbind("pre-post"=c(1, 0, -1, -1, 0, 1),  # coefficients for testing a within b1
-                  "pre-trans"=c(1,  -1, 0, -1, 1, 0),  # coefficients for testing a within b2
-                  "trans-post"=c(0, 1, -1, 0, -1, 1))  # coefficients for interaction
+cntrMat <- rbind(
+  "Main effect of Site"=c(1, 1, 1, -1, -1, -1),
+  "Main effect of treatment" = c(1, 1, -1, -1, -1, -1),
+  "(ref1-treat1)-(ref3-treat3)"=c(1, 0, -1, -1, 0, 1),
+  "(ref1-treat1)-(ref2-treat2)"=c(1,  -1, 0, -1, 1, 0), 
+  "(ref2-treat2)-(ref3-treat3)"=c(0, 1, -1, 0, -1, 1)
+  ) 
+
+# The contrasts above could also be labeled as differences between time periods (eg. (ref1-ref3)-(treat1-treat3)).  Mathematically, these are the same.
 
 #general linear hypothesis
-glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided")
+glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided") # alternative='two.sided' is the default
 
-summary(glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided"), test=adjusted("none"))
+summary(glht(aov2, linfct=mcp(TMT=cntrMat)), test=adjusted("none"))  
 ```
+
+The mcp() function {Multiple ComParisons} changes the hypothesis so that you are testing if the difference between the groups is zero.
 
 Or, you can create an Rmarkdown and generate an easy to read table like this one:
 
