@@ -36,7 +36,7 @@ Many, many errors that occur happen because a function is trying to access an ob
 To set the working directory in the RStudio IDE, navigate to the "Files" tab >> click on the three dots >> navigate to your data folder >> click "Open"
 To encode the working directory: (copy the line and paste to top of your .R script file)
 ```{r , results= FALSE}
-setwd("~/ICMGP2019")
+# setwd("~/ICMGP2019")
 ```
 
 
