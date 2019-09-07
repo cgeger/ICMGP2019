@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 # Making pretty pictures
@@ -15,40 +16,39 @@ Because R is an open source software package, there are many different packages 
 
 ## Base R images
 
-The functions included with your basic R install are actually super flexible.  It is possible to make a figure do pretty much anything using the base R plotting functions.  The downside of all this flexibility is you might need to do a lot of coding to get your plot perfect.
+The functions included with your basic R install are actually super flexible. It is possible to make a figure do pretty much anything using the base R plotting functions. The downside of all this flexibility is you might need to tweak your code to make a plot perfect.
 
-Lets look at some examples using some data from Lesson 1
+Lets look at some examples using some data from Lesson 1.
 
 ### Boxplot
 
+We'll use the fluoroprobe dataset to look at how Diatom concentrations range by site.
 ```{r}
 FLP2018 <- readRDS("data/FLP2018.Rdata")
 
-plot(FLP2018$Site, FLP2018$Temp, 
+plot(FLP2018$Site, FLP2018$Diatoms, 
      xlab = "Site",
-     ylab = "Temperature in degrees C")
+     ylab = "Diatoms in mg/L")
 ```
 
-That was pretty quick and painless!  It also only scratches the surface of what these plots can do, but it can take a lot of work to learn all the functions you need.
+That was pretty quick and painless! It also only scratches the surface of what these plots can do, but it can take a lot of work to learn all the functions you need.
 
 ### Boxplot and Scatterplot
 
 Another example:
 ```{r}
-par(mfrow = c(1,2))
+par(mfrow = c(1,2)) #this setting allows us to plot two plot windows side by side
 
-plot(FLP2018$Site, FLP2018$Temp, 
+plot(FLP2018$Site, FLP2018$Diatoms, #copy from earlier plot
      xlab = "Site",
-     ylab = "Temperature in degrees C")
+     ylab = "Diatoms in mg/L")
 
 plot(FLP2018$Depth, FLP2018$Temp, col = FLP2018$Date,
      xlab = "Depth",
      ylab = "Temperature in degrees C")
 ```
 
-The second figure here is a depth profile, but it doesn't look like one. Let's change it so that depth is represented on the vertical axis
-
-### Boxplot and Lineplot
+The second figure here is a depth profile, but it doesn't look like one. We'll need to change it so that depth is represented on the vertical axis
 
 ```{r}
 par(mfrow = c(1,2))
@@ -58,19 +58,54 @@ plot(FLP2018$Site, FLP2018$Temp,
      ylab = "Temperature in degrees C")
 
 plot(y=FLP2018$Depth, x=FLP2018$Temp, col = FLP2018$Date,
-<<<<<<< HEAD
      ylab = "Depth",
      xlab = "Temperature in degrees C",
      ylim=rev(range(FLP2018$Depth)))
 ```
 
-Also notice the order in which you run lines of code is important, especially when creating graphics. Writing code is like writing a recipe, if we run lines of code in the wrong order, it can be like telling the computer to bake the cake before the batter is mixed. If we want to put a line, or additional points on the plot, we need to make sure everything happens in the right order.
+Notice the order in which you run lines of code is important, especially when creating graphics. Writing code is like writing a recipe, if we run lines of code in the wrong order, it can be like telling the computer to bake the cake before the batter is mixed. If we want to put a line, or additional points on the plot, we need to make sure everything happens in the right order.
+
+This is a good example of where `ggplot` is a good option for some kinds of plots.
 
 ## Introducing `ggplot`
 
 ### Scatterplot
 
-The `ggplot` library provides more tools for creating data-driven visualizations. Let's create a scatterplot that shows the concentration of Green Algae in the fluoroprobe samples by depth and site.
+The `ggplot` library provides more tools for creating data-driven visualizations, the package takes the control of basic R graphics and makes them slightly more user friendly. It is still fairly flexible, but you do sacrifice some control for convenience.  We believe this package is very useful, especially for people just starting with R. 
+
+Lets see if we can recreate plots from above, let's try the Diatom boxplot first and then the temperature depth profile again using `ggplot`.
+
+```{r}
+library(ggplot2)
+
+ggplot(FLP2018, aes(x=Site, y=Diatoms)) +
+  geom_boxplot() +
+  theme_bw()
+```
+
+Let's create a scatterplot that shows the concentration of Green Algae in the fluoroprobe samples by depth and site.
+
+### Boxplot
+
+Let's make the boxplot with Diatom concentrations a little more detailed, with overlaid jittered points.
+
+```{r}
+p1 <- ggplot(data = FLP2018, aes(x = Site, y =  Diatoms, color = Site))+
+  geom_boxplot(outlier.shape = NA) +
+  ylab("Diatoms in ug/L")+
+  geom_jitter(alpha = 0.25) +
+  theme(legend.position = "none") + scale_color_viridis_d()
+```
+
+### Scatterplot
+```{r}
+ggplot(data = FLP2018, 
+       aes(x = Date, 
+           y = Diatoms, 
+           color = Site,
+           group = Depth)) +
+    geom_point(alpha = 0.25)
+```
 
 ```{r, results = FALSE}
 library(ggplot2)
@@ -81,43 +116,9 @@ ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
   theme_bw()
 ```
 
-### Boxplot
-
-Let's make a boxplot of the Diatom concentrations in the fluoroprobe dataset by site, with jittered points that show the
-
-```{r}
-ggplot(data = FLP2018, aes(x = Site, y =  Diatoms, color = Site))+
-  geom_boxplot(outlier.shape = NA) +
-  ylab("Diatoms in ug/L")+
-  geom_jitter(alpha = 0.25) +
-  theme(legend.position = "none") + scale_color_viridis_d()
-```
-
-### Timeseries
-
-```{r}
-ggplot(data = FLP2018, 
-       aes(x = Date, 
-           y = Diatoms, 
-           color = Site,
-           group = Depth)) +
-    geom_point(alpha = 0.25)
-
-
-```
-    
 ### Faceting
 
-```{r}
-ggplot(data = FLP2018, 
-       aes(x = Date, 
-           y = Diatoms, 
-           color = Site,
-           group = Depth)) +
-    geom_point(alpha = 0.25) +
-    facet_wrap( ~Site)
-```
-
+Let's use faceting to seperate the scatterplots by site
 ```{r}
 ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
   geom_point(alpha = 0.5) + 
@@ -127,84 +128,73 @@ ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
     facet_wrap( ~Site)
 ```
 
-## Introducing gganimate
+Here's another example of faceting, let's plot a timeseries to see the Diatom blooms at each site:
+
 ```{r}
-#install.packages("gganimate")
-library(gganimate)
-=======
-    ylim=rev(range(FLP2018$Depth)), 
-    axes = F, ann = F)
-box()
-axis(side = 3)
-axis(side = 2)
-mtext('Temperature (\u00B0C)', side = 3, line = 2.5)
-mtext('Depth (m)', side = 2, line = 2.5)
+ggplot(data = FLP2018, 
+       aes(x = Date, 
+           y = Diatoms, 
+           color = Site,
+           group = Depth)) +
+    geom_point(alpha = 0.25) +
+    facet_wrap( ~ Site)
 ```
+
+Now let's use faceting to look the temperature profiles
+
+```{r}
+library(lubridate)
+p2 <- ggplot(data = FLP2018, aes(x=Depth, y=Temp, color = factor(month(Date)), group = Date)) +
+  geom_path() + 
+  geom_point(alpha = 0.4, size = 1) +
+  scale_x_reverse() +
+  coord_flip() +
+  scale_y_continuous(position = 'right') +
+  facet_wrap(~Site) +
+  #facet_wrap(~Site, ncol = 1) +
+  theme_bw()
+```
+
 
 Now it looks like a depth profile, but we had to do a lot of additional coding to get it this way.  Also, if you look at the dataset, the depth profile doesn't distinguish between sites - just dates!  Fixing this to look at each site will require creating a separate plot for each
 
-Also notice the order in which you run lines of code is important when using the basic R graphics.  If we want to put a line, or additional points on the plot, we need to make sure everything happens in the right order.
+Now we have recreated both of these plots.
 
-### ggplot
-
-This software package takes the control of basic R graphics and places them in a slightly more user friendly package.  This is still a fairly flexible package, but you do sacrafice some control for convenience.  We believe this package is very useful, especially for people just starting with R. 
-
-Lets see if we can recreate plots from above:
+### Plotting ggplots side-by-side
 
 ```{r}
-library(tidyverse) # or library(ggplot2)
 library(gridExtra)
-
-p1 <- ggplot(FLP2018, aes(x=Site, y=Temp))+
-  geom_boxplot()+
-  theme_bw()
-
-p2 <- FLP2018 %>% ggplot(aes(x=Depth, y=Temp, color = factor(month(Date)), group = Date))+
-  geom_path()+
-  scale_x_reverse()+
-  coord_flip()+
-  scale_y_continuous(position = 'right')+
-  facet_wrap(~Site, ncol = 1)+
-  theme_bw()
-```
-
-Now we have recreated both of these plots.  We could visualize them at the same time, but I don't think that is actually necessary with this example.
-
-```{r}
 gridExtra::grid.arrange(p1, p2, nrow=1)
 ```
 
-We can also fairly easily do a bunch of different things with our plots.  For example, if we wanted to visualize all the datapoints on top of the boxplot
+## Introducing gganimate
 
 ```{r}
-ggplot(data = FLP2018, aes(x = Site, y =  Temp, color = Site))+
-  geom_boxplot(outlier.shape = NA) +
-  ylab("Temperature in /00B0C")+
-  geom_jitter(alpha = 0.25) +
-  theme(legend.position = "none")+ 
-  scale_color_viridis_d()
+#install.packages("gganimate")
+library(gganimate)
+
+anim <- ggplot(data = FLP2018, aes(x = GreenAlgae, y = Depth, color = Site)) +
+  geom_point(size = 2, alpha = 0.5) + 
+  facet_grid( ~Site) +
+  scale_y_reverse( lim=c(15.5, 0)) +
+  theme_bw() +
+  labs(title = 'Date: {frame_time}', x = 'Green Algae in ug/L', y = 'Depth in m') +
+  transition_time(Date) +
+  ease_aes('linear') +
+  shadow_mark(alpha = 0.3, size = 0.5) +
+  theme(legend.position = "none")
+
+animate(anim, duration = 15, width = 700, height = 500)
 ```
 
-or a different example
-
-```{r}
-ggplot(data = FLP2018, aes(x = Site, y =  Diatoms, color = Site))+
-  geom_boxplot(outlier.shape = NA) +
-  ylab("Diatoms in ug/L")+
-  geom_jitter(alpha = 0.25) +
-  theme(legend.position = "none")+ scale_color_viridis_d()
-```
-
+## Introducing leaflet
 
 ```{r}
 # install.packages("leaflet")
 library(leaflet)
-leaflet(data = na.omit(Hg$)) %>%
-  leaflet::addTiles() %>%
-  leaflet::addCircles(~lon, ~lat, opacity = 0.5)
-leaflet(data = Hg$General_Location) %>%
-  addTiles() %>%
-  addCircles()
-```
 
->>>>>>> d16d106e21692b3b007deb37d7aa1f22b60a911d
+m <- leaflet() %>% #uses the pipe operator
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lat = 50.048643, lng = 19.931288, popup = "Krakow ICE")
+m
+```
