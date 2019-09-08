@@ -3,7 +3,7 @@ This repository contains materials for the 2019 International Conference on Merc
 
 ## ICMGP 2019: Achieving data management, visualization and analysis
 
-Geoffrey Millard, Caitlin Eger, and Jackie Gerson
+Caitlin Eger, Geoffrey Millard, and Jackie Gerson
 
 Welcome to the site for 2019 International Conference on Mercury as a
 Global Pollutant 2019 Workshop on Achieving data management,
@@ -12,7 +12,7 @@ material](https://htmlpreview.github.io/?https://github.com/cgeger/ICMGP2019/blo
 before attending the course with us on **Sunday, September 8th** from
 **9:30 am to 12:00pm**.
 
-See you in Krakow\!\! *-Geoff, Caitlin and Jackie*
+See you in Krakow\!\! *-Caitlin, Geoff and Jackie*
 
 ## Workshop Description
 
