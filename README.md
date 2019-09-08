@@ -1,8 +1,8 @@
 # ICMGP2019
 This repository contains materials for the 2019 International Conference on Mercury as a Global Pollutant workshop on achieving data management, visualization, and analysis
-=======
-ICMGP 2019: Achieving data management, visualization and analysis
-================
+
+## ICMGP 2019: Achieving data management, visualization and analysis
+
 Geoffrey Millard, Caitlin Eger, and Jackie Gerson
 
 Welcome to the site for 2019 International Conference on Mercury as a
