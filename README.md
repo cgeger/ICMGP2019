@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ICMGP2019
 This repository contains materials for the 2019 International Conference on Mercury as a Global Pollutant workshop on achieving data management, visualization, and analysis
 =======
@@ -42,4 +41,4 @@ of mercury science.
     R](https://www.udemy.com/course/statistics-with-r/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-yctmVH2oihyh9oIpfFu_Xw)
   - [Udemy Data Science with
     R](https://www.udemy.com/course/datascience_with_r/?LSNPUBID=JVFxdTr9V80&ranEAID=JVFxdTr9V80&ranMID=39197&ranSiteID=JVFxdTr9V80-eBPGmB5Vo.8wJ.Jb0zEF7Q)
->>>>>>> 316f4be9460776a3396566140b11df8a1718b6d8
+
