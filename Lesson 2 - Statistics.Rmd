@@ -252,7 +252,7 @@ aov2 <- aov(data=wide, DOC ~ TMT)
 summary(aov2)
 ```
 
-Notice the difference between the `summary()` of aov1 and aov2.  You need to aov1 results to justify building a contrast matrix for aov2.
+Notice the difference between the `summary()` of aov1 and aov2.  You need results from aov1 to justify building a contrast matrix for aov2.
 
 Speaking of a contrast matrix, lets create one.  The order of the factors in your treatment (where we used the `interaction()` function), is the order that the contrast matrix will be constructed in.
 
