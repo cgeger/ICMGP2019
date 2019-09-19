@@ -28,7 +28,7 @@ library(dataRetrieval)
 sites <- c('0134277112', '0134277114')
 
 #detailed location information about the site
-readNWISsite(c('0134277112', '0134277114'))
+# readNWISsite(c('0134277112', '0134277114'))
 
 #whatNWISdata displays the datasets available at each site
 available <- whatNWISdata(siteNumber=c('0134277112', '0134277114'))
@@ -75,14 +75,24 @@ data %>%
             n = n())
 ```
 
-Awesome, but what if I wanted to look at this through time?  Monthly or annual?
+Awesome, but what if I wanted to look at this through time?  Monthly or annual?  We can use functions that are part of the lubridate package to quickly and easily manipulate dates.
 
-```{r summarize by date, warning=F, message=F}
-library(lubridate)
-class(data$sample_dt)
+```{r summarize by date, warning=F, message=F, results=F}
+library(lubridate) # install.packages("lubridate") if needed
+class(data$sample_dt) # we can see R recognizes this as a date
+```
 
+Using Lubridate, we can look at the years, months, days, etc. separately from other date information.
+
+```{r}
+# we can look at the years, or months separately from everything else
 head(year(data$sample_dt))
 head(month(data$sample_dt))
+```
+
+Using this package, we can generate summary statistics for each month in each year.
+
+```{r}
 
 summary <- data %>% 
   group_by(Site, Analyte, year(sample_dt), month(sample_dt)) %>% 
@@ -96,7 +106,7 @@ summary
 
 Custom groupings are a little more complicated, but can be done.
 #pre and post treatment data (Creating categorical variables from continuous variables)
-pre-treatment (Group 1), post-treatment (Group 2), long-term post-treatment (Group 3)
+We can use the values in the sample_dt column to generate catagorical data.  In this case, we can split everything into three groups: pre-treatment (Group 1), post-treatment (Group 2), long-term post-treatment (Group 3). Once we have the catagories, we can again generate summary statistics.
 
 ```{r custom groups}
 data$Treatment[ data$sample_dt < as.Date('2013-10-1')  ] <- 1
@@ -120,37 +130,49 @@ This makes it really easy to break your data down in a variety of ways relativel
 We have some descriptive stats, but we want to see if there are any relationships in our data.  Base-R has some pretty good tools for this, but they don't work very well with data in long format, so we need to switch to a wide format.
 
 ```{r cor and lm}
-head(data)
 simple <- data %>% select(Site, Date = sample_dt, Time = sample_tm, Analyte, Result = result_va, Treatment)
 simple <- data.frame(Site=data$Site, Date = data$sample_dt, Time = data$sample_tm, Analyte=data$Analyte, Result = data$result_va, Treatment=data$Treatment)
+```
 
+We need both date and time above, or the spread will not work (multiple samples were collected on the same day after all).
 
-# we need both date and time above, or the spread will not work (multiple samples were collected on the same day after all)
+Now we can use some dplyr functions (part of tidyverse package) to reshape our dataset.
 
+```{r}
 wide <- simple %>% spread(key = Analyte, value = Result)
 head(wide)
-tail(wide)
+```
 
+This will allow us to quickly generate a correlation.  Just make sure you are directing R to use the correct set of data and the correct method.
+
+```{r}
 cor(x= wide$DOC, y= wide$Hg)
-cor(x= wide$DOC, y= wide$Hg, use = 'complete.obs')
+cor(x= wide$DOC, y= wide$Hg, use = 'complete.obs') # default method is a Pearson correlation
 cor(x= wide$DOC, y= wide$Hg, use = 'complete.obs', method = 'kendall')
+```
 
+It would also be helpful to quickly visualize our data.  We can do this using basic R functions, but we will cover that in greater detail in lesson 3.
+
+```{r}
 #Visualize data in base plot
 plot(wide$DOC, wide$Hg, xlab = "DOC in mg/L", ylab = "Dissolved Hg in ng/L")
 ```
 
 #create a linear regression model and visualize residuals
+I don't use a lot of correlations in my research, I tend to look for linear regressions.  R can handle this using the `lm()` function.
+
 ```{r}
 reg1 <- lm(data=wide, Hg ~ DOC) #create linear regression model
 reg1 #this is the output of the linear model object
-summary(reg1)
-par(mfrow=c(2,2))
-plot(reg1)
-par(mfrow=c(1,1))
 ```
 
+This is great, but it doesn't actually give us enough information to draw any sort of conclusion.  If we pair this with the `summary()` function, we get a better idea of what is happening.
+
+```{r}
+summary(reg1)
+```
 We wanted to see if DOC concentrations predict Hg concentrations (Formula = Hg ~ DOC)
-Residuals are mostly, but not completely symmetrical -- might have a left skew, but that because we have 6 treatment groups in the data set
+Residuals are mostly, but not completely symmetrical -- might have a left skew, but that be because we have 6 treatment groups in the data set
 
 Estimate of intercept has a significant p-value, saying that it is significantly different from zero, but in real life, there are no negative Hg concentrations, so it is not valuable information
 
@@ -158,8 +180,20 @@ The estimate of "DOC" is actually the slope of the line, meaning that for each u
 
 The R-squared values are a measure of "fit."  If all the data points fell on the regression line, R-squared = 1.
 
+### Diagnostic plots
+
+If we want to look at more diagnostic information, the base R plotting function can again be helpful.  If we change the parameters of the plotting window, we can see all four default diagnostic figures at the same time.
+
+```{r}
+par(mfrow=c(2,2))
+plot(reg1)
+par(mfrow=c(1,1))
+```
 
 #plot the model on the data
+
+We can add the linear regression to the earlier plot by adding the `abline()` function after the `plot()` function.  We can also make adjustments to the color so it is easier to see.
+
 ```{r}
 plot(wide$DOC, wide$Hg, xlab = "DOC in mg/L", ylab = "Dissolved Hg in ng/L")
 abline(reg1, lty = 2, col = "cornflowerblue")
@@ -167,17 +201,21 @@ abline(reg1, lty = 2, col = "cornflowerblue")
 ```
 
 
-#Pairwise comparisons
+# Pairwise comparisons
 
 With different treatment groups, a common test is a t-test or a Tukey test.  Let's set up a couple of these tests with our data looking at the distribution (can we use parametric tests) and some groupings.
 
-First we need to set up the class(Factors)
+First we need to set up the class(Factors).
 
 ```{r statistical tests}
 wide$Site <- as.factor(wide$Site)
 wide$Treatment <- as.factor(wide$Treatment)
+```
 
-#check for normality
+## Check for normality
+Once we have these factors, we can look at a histogram, or use a Shapiro-Wilk test to check for normality.
+
+```{r}
 hist(wide$DOC)
 
 shapiro.test(wide$DOC) # null hypothesis: data is normal
@@ -185,14 +223,20 @@ shapiro.test(wide$Hg)
 shapiro.test(wide$DOC[wide$Site == "Reference"])
 ```
 
-neither dataset is normally distributed (pvalue is less than 0.05), but for the interest of this excercise, lets look at both some parametric and non-parametric tests.
+Neither dataset appears to be normally distributed (pvalue is less than 0.05), but for the interest of this excercise, lets look at both some parametric and non-parametric tests.
+
+## Non-parametric example
 
 ```{r}
 #non-parametic example
 kruskal.test(data = wide, DOC ~ Site) #like an anova, testing for differences in DOC concentration by Site
 kruskal.test(data = wide, DOC ~ Treatment) #testing for differences in DOC conc by Treatment
+```
 
-# parametic example
+## Parametic example
+We can use the `aov()` function to look at Tukey's Honest Square Difference, or a general ANOVA test.
+
+```{r}
 aov1 <- aov(data = wide, DOC ~ Site + Treatment + Site*Treatment)
 summary(aov1)
 TukeyHSD(aov1)
@@ -204,13 +248,17 @@ This example doesn't have any interaction between the site and treatment level. 
 ```{r contrasts, warning=F, message=F}
 library(multcomp)
 wide$TMT <- interaction(wide$Site, wide$Treatment)
-aovdoc <- aov(data = wide, DOC ~ Site + Treatment + Site*Treatment)
 aov2 <- aov(data=wide, DOC ~ TMT)
-summary(aovdoc)
 summary(aov2)
+```
+
+Notice the difference between the `summary()` of aov1 and aov2.  You need to aov1 results to justify building a contrast matrix for aov2.
+
+Speaking of a contrast matrix, lets create one.  The order of the factors in your treatment (where we used the `interaction()` function), is the order that the contrast matrix will be constructed in.
+
+```{r}
 cntrMat <- rbind(
   "Main effect of Site"=c(1, 1, 1, -1, -1, -1),
-  "Main effect of treatment" = c(1, 1, -1, -1, -1, -1),
   "(ref1-treat1)-(ref3-treat3)"=c(1, 0, -1, -1, 0, 1),
   "(ref1-treat1)-(ref2-treat2)"=c(1,  -1, 0, -1, 1, 0), 
   "(ref2-treat2)-(ref3-treat3)"=c(0, 1, -1, 0, -1, 1)
@@ -224,9 +272,9 @@ glht(aov2, linfct=mcp(TMT=cntrMat), alternative="two.sided") # alternative='two.
 summary(glht(aov2, linfct=mcp(TMT=cntrMat)), test=adjusted("none"))  
 ```
 
-The mcp() function {Multiple ComParisons} changes the hypothesis so that you are testing if the difference between the groups is zero.
+The `mcp()` function {Multiple ComParisons} changes the hypothesis so that you are testing if the difference between the groups is zero, instead of the difference between slopes.
 
-Or, you can create an Rmarkdown and generate an easy to read table like this one:
+Notice that the summary generates a table similar to what we have seen before with estimates of the difference between the group means and a p-value.  This is not very easy to share with colleages, so your could use Rmarkdown (like we have for these lessons) to create an easy to read table like this one:
 
 
 ```{r pretty table, warning=F, message=F}
