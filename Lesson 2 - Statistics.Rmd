@@ -3,7 +3,7 @@ title: "Lesson 2 - Statistics"
 author: "Geoffrey Millard"
 date: "July 17, 2019"
 self_contained: yes
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
