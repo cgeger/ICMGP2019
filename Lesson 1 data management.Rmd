@@ -2,7 +2,7 @@
 title: "ICMGP 2019 Lesson 1"
 author: "Caitlin Eger"
 date: "9/8/2019"
-output: github_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE, results = FALSE}
