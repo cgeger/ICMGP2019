@@ -2,8 +2,7 @@
 title: "Lesson 3 - Additional Visualizations"
 author: "Caitlin Eger"
 date: "September 8, 2019"
-output: github_document
-always_allow_html: yes
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
