@@ -543,7 +543,7 @@ summary(aov2)</code></pre>
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 86 observations deleted due to missingness</code></pre>
-<p>Notice the difference between the <code>summary()</code> of aov1 and aov2. You need to aov1 results to justify building a contrast matrix for aov2.</p>
+<p>Notice the difference between the <code>summary()</code> of aov1 and aov2. You need results from aov1 to justify building a contrast matrix for aov2.</p>
 <p>Speaking of a contrast matrix, lets create one. The order of the factors in your treatment (where we used the <code>interaction()</code> function), is the order that the contrast matrix will be constructed in.</p>
 <pre class="r"><code>cntrMat &lt;- rbind(
   &quot;Main effect of Site&quot;=c(1, 1, 1, -1, -1, -1),
