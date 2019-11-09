@@ -50,8 +50,9 @@ Example: Honnedaga lake dataset
 ```{r , results= FALSE}
 Hon <- read.csv("data/All_Honnedaga_water_chemistry.csv")
 head(Hon) #look at the top of dataset
-#tail(Hon, 10) #these are the last 10 rows of the dataset
+tail(Hon, 10) #these are the last 10 rows of the dataset
 str(Hon) #this object is a data.frame, note size and classes of each variable
+summary(Hon)
 ```
 
 
