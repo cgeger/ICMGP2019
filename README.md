@@ -27,7 +27,7 @@ Thank you for attending out workshop. We hope that you learned some new things a
 Additional R Resources
 ----------------------
 
--   [YaRrr! The Pirate’s Guide to R](http://nathanieldphillips.com/thepiratesguidetor/)
+-   [YaRrr! The Pirate’s Guide to R](https://bookdown.org/ndphillips/YaRrr/)
 -   [DataCamp R Courses](https://www.datacamp.com/courses)
 -   [Plural Sight R Courses](https://www.pluralsight.com/search?q=R&categories=course)
 -   [Jared Knowles' R Bootcamp](https://www.jaredknowles.com/r-bootcamp/)
