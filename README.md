@@ -18,11 +18,11 @@ Lesson Plans
 
 Thank you for attending our workshop. We hope that you learned some new things and are excited to continue developing your skills in R. Below are the notes from our lesson plans for your future reference.
 
-[Lesson 1 - Data Management](https://htmlpreview.github.io/?https://github.com/cggeger/ICMGP2019/blob/master/Lesson-1-data-management.html)
+[Lesson 1 - Data Management](https://htmlpreview.github.io/?https://github.com/cgeger/ICMGP2019/blob/master/Lesson-1-data-management.html)
 
-[Lesson 2 - Statistics](https://htmlpreview.github.io/?https://github.com/cggeger/ICMGP2019/blob/master/Lesson-2---Statistics.html)
+[Lesson 2 - Statistics](https://htmlpreview.github.io/?https://github.com/cgeger/ICMGP2019/blob/master/Lesson-2---Statistics.html)
 
-[Lesson 3 - Visualization](https://htmlpreview.github.io/?https://github.com/cggeger/ICMGP2019/blob/master/Lesson-3-visualization.html)
+[Lesson 3 - Visualization](https://htmlpreview.github.io/?https://github.com/cgeger/ICMGP2019/blob/master/Lesson-3-visualization.html)
 
 Additional R Resources
 ----------------------
