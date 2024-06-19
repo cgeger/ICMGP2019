@@ -16,7 +16,7 @@ See a hands-on demonstration using real data and learn to use the open-source st
 Lesson Plans
 ------------
 
-Thank you for attending out workshop. We hope that you learned some new things and are excited to continue developing your skills in R. Below are the notes from our lesson plans for your future reference.
+Thank you for attending our workshop. We hope that you learned some new things and are excited to continue developing your skills in R. Below are the notes from our lesson plans for your future reference.
 
 [Lesson 1 - Data Management](https://htmlpreview.github.io/?https://github.com/cgeger/ICMGP2019/blob/master/Lesson-1-data-management.html)
 
